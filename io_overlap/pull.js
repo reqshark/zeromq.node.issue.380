@@ -11,7 +11,7 @@ pull.connect(addr)
 
 log('logs/conns.log','connected: '+pull.identity,'a')
 
-var notPending = 0, recvd = 0, recvdms_since_standard_epoch, msg_io_latency=0
+var notPending = 0, recvd = 0, recvdms_since_standard_epoch, async_duration = 3000
 
 pull.on('error', function(err){
   log('err.log','pull with PID '+process.pid+' errored out')
@@ -20,31 +20,22 @@ pull.on('error', function(err){
 
 pull.on('message', function (msg){
   recvdms_since_standard_epoch = Date.now()
-  recvd++;
-  msg = String(msg)
+  recvd++; msg = String(msg)
   log('logs/msgs'+pull.identity+'.log',msg,'a')
-  var withPrepWorkAmount = parseInt(msg.split(':')[1])
-  work(withPrepWorkAmount)
+
+  //passing off an async handler opens the eventloop
+  //socket's onmessage event can receive calls to emit() now
+  setTimeout(async,async_duration)
 })
 
-function work(n){
-  var this_jobs_recvdms = recvdms_since_standard_epoch
-  var i = 0
-  var r = Math.floor(Math.random()*1000)
-  var reduce = reduction(Math.floor(n/r))
-  while(i <= reduce){
-    //performing some time or resource intensive task
-    //logging a random int under a hundred thousand shouldn't take too long
-    var logmsg = 'loop_position: '+i+' msgs_recvd: '+recvd+'  |  '
-      +' i/o overlap: '+(recvd-notPending)+'  |  '
-      +' i/o latency: '+msg_io_latency+'ms'
-    log('logs/count'+pull.identity+'.log', logmsg, 'a')
-    if(i==reduce){
-      ++notPending
-      msg_io_latency = Date.now()-this_jobs_recvdms
-    }
-    i++
-  }
+function async() {
+  notPending++;
+  var logmsg = //'async_duration: ' +async_duration
+    ' msgs_recvd: '+recvd+' |'
+    +' np: '+ notPending + ' |'
+    +' i/o overlap: '+ (recvd-notPending)
+    //+' msg_async_latency: ' + (Date.now() - recvdms_since_standard_epoch) +'ms'
+  log('logs/count'+pull.identity+'.log', logmsg, 'a')
 }
 
 function log(file,msg,flag) {
@@ -53,9 +44,4 @@ function log(file,msg,flag) {
     fs.appendFileSync(file, data)
   else
     fs.writeFileSync(file, data)
-}
-
-function reduction(r){
-  if(r>4500000)r = 2000000
-  return Math.floor(r/100)
 }

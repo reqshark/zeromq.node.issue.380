@@ -26,7 +26,7 @@ if(fs.existsSync('logs')){
 }
 
 //where cores are abundant i'd rather have fewer workers
-if(pull_qty>3)pull_qty-=2
+if(pull_qty>3)pull_qty-=3
 
 while(i<pull_qty){
   
