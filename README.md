@@ -1,15 +1,31 @@
 # zeromq.node.issue.380
 issue number 380 about puller io https://github.com/JustinTulloss/zeromq.node/issues/380
 
+### how to run this scenerio
+
+#### synchronous pull
+filling the callback with synchronous blocks results in socket behavior as expected:
 ```bash
 $ git clone https://github.com/reqshark/zeromq.node.issue.380 issue.380
 $ cd issue.380/zeromq.node.module && make && cd ../io_overlap
 $ node overlap.js
 ```
 
-### how to run this scenerio
+#### asynchronous pull.
+if you have a lot of patience, watch what it does and just wait it out for a while, like 10 or 20 minutes. go make a cup of coffee or something. when you return, note that it does eventually reach a state of equilibrium or apparent stability. overlap drops down to consistent levels, like maybe 15 emit calls that are slightly ahead-of-callback completion.
+```bash
+#do a checkout or just pull it down again
+$ git checkout async
 
-disclaimer: nothing under the hood being looked at. I haven't even started profiling the runtime yet.
+#if you don't have asnyc branch in your remote refs you need to fetch
+$ git fetch && git checkout async
+
+#or just start over in a new directory
+$ git clone https://github.com/reqshark/zeromq.node.issue.380 issue.380.async
+$ cd issue.380.async/zeromq.node.module
+$ make && cd .. && git checkout async && cd io_overlap
+$ node overlap
+```
 
 if you're doing this locally, shut down stuff you don't need so we can observe some decent system load. hopefully you have a multicore processor to test this on.
 
